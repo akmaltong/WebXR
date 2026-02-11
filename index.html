@@ -464,6 +464,11 @@
     
     <!-- Отладка -->
     <div id="debug-info" style="position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.9); color: #0f0; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 11px; max-width: 300px; z-index: 1000000; max-height: 200px; overflow-y: auto;"></div>
+    
+    <!-- Тестовая кнопка для ручного управления -->
+    <button id="manual-place-btn" style="position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #ff6b6b; color: white; border: none; padding: 15px 30px; border-radius: 25px; font-size: 16px; font-weight: bold; z-index: 1000001; display: none;">
+        👆 Нажмите для размещения
+    </button>
 
     <script>
         // Глобальные переменные
@@ -490,6 +495,7 @@
         const arInstructions = document.getElementById('ar-instructions');
         const closeInstructionsBtn = document.getElementById('close-instructions');
         const debugInfo = document.getElementById('debug-info');
+        const manualPlaceBtn = document.getElementById('manual-place-btn');
         
         // Функция логирования
         function log(msg) {
@@ -499,6 +505,20 @@
                 debugInfo.scrollTop = debugInfo.scrollHeight;
             }
         }
+        
+        // Ручная кнопка размещения
+        manualPlaceBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            log('👆 Manual button clicked');
+            if (!surfaceScanned) {
+                surfaceScanned = true;
+                showPlacementUI();
+                manualPlaceBtn.textContent = '🍔 Нажмите для бургера';
+            } else if (!modelPlaced && reticle.visible) {
+                placeBurger();
+                manualPlaceBtn.style.display = 'none';
+            }
+        });
         
         // Закрыть инструкцию
         closeInstructionsBtn.addEventListener('click', () => {
@@ -584,28 +604,41 @@
             
             const loader = new THREE.GLTFLoader();
             log('📦 Загружаю модель...');
-            loader.load('Hamburger2.glb', (gltf) => {
-                log('✅ Модель загружена');
-                burgerModel = gltf.scene;
-                burgerModel.scale.set(8, 8, 8);
-                burgerModel.visible = false; // Скрыт до размещения
-                
-                burgerModel.traverse((child) => {
-                    if (child.isMesh) {
-                        child.castShadow = true;
-                        child.receiveShadow = true;
-                    }
-                });
-                
-                scene.add(burgerModel);
-                loading.style.display = 'none';
-                
-                // Начинаем обычный рендер
-                animate();
-            }, undefined, (error) => {
-                console.error('Ошибка загрузки:', error);
-                loading.innerHTML = '<p style="color: #ff6b6b;">Ошибка загрузки модели</p>';
-            });
+            
+            // Пробуем загрузить с разных путей
+            const modelPath = './Hamburger2.glb';
+            
+            loader.load(modelPath, 
+                (gltf) => {
+                    log('✅ Модель загружена');
+                    burgerModel = gltf.scene;
+                    burgerModel.scale.set(8, 8, 8);
+                    burgerModel.visible = false; // Скрыт до размещения
+                    
+                    burgerModel.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                        }
+                    });
+                    
+                    scene.add(burgerModel);
+                    loading.style.display = 'none';
+                    
+                    // Начинаем обычный рендер
+                    animate();
+                },
+                (progress) => {
+                    // Прогресс загрузки
+                    const percent = (progress.loaded / progress.total * 100).toFixed(0);
+                    log('📦 Загрузка: ' + percent + '%');
+                },
+                (error) => {
+                    log('❌ Ошибка загрузки: ' + error.message);
+                    console.error('Ошибка загрузки:', error);
+                    loading.innerHTML = '<p style="color: #ff6b6b;">❌ Ошибка загрузки модели</p>';
+                }
+            );
         }
         
         // Проверка поддержки AR
@@ -642,6 +675,7 @@
                 });
                 
                 log('✅ XR сессия получена');
+                log('🔍 DOM Overlay: ' + (xrSession.domOverlayState ? 'Активен' : 'Нет'));
                 isARActive = true;
                 surfaceScanned = false;
                 modelPlaced = false;
@@ -649,7 +683,8 @@
                 // Настройка сессии
                 xrSession.addEventListener('end', onARSessionEnd);
                 
-                const baseLayer = new THREE.XRWebGLLayer(xrSession, renderer.getContext());
+                const gl = renderer.getContext();
+                const baseLayer = new XRWebGLLayer(xrSession, gl);
                 xrSession.updateRenderState({ baseLayer });
                 
                 const refSpace = await xrSession.requestReferenceSpace('local');
@@ -666,8 +701,16 @@
                 log('📱 Показываю UI сканирования...');
                 showScanningUI();
                 
-                // Обработчики тачей
-                xrSession.addEventListener('select', onSelect);
+                // Показываем ручную кнопку для надежности
+                manualPlaceBtn.style.display = 'block';
+                manualPlaceBtn.textContent = '👆 Нажмите чтобы отсканировать';
+                
+                // Обработчики тачей - используем DOM события для надежности
+                log('👆 Настраиваю обработчики тачей...');
+                
+                // Обработка через DOM overlay
+                document.body.addEventListener('touchstart', handleTouch, { passive: false });
+                document.body.addEventListener('click', handleTouch, { passive: false });
                 
                 renderer.xr.setSession(xrSession);
                 log('✅ AR запущен!');
@@ -703,7 +746,25 @@
         
         // Обработка выбора (тапа)
         function onSelect(event) {
-            log('👆 Тап detected');
+            log('👆 onSelect detected');
+            handleInteraction();
+        }
+        
+        // Обработка через DOM события
+        function handleTouch(event) {
+            if (!isARActive) return;
+            
+            // Предотвращаем стандартное поведение
+            if (event.type === 'touchstart') {
+                event.preventDefault();
+            }
+            
+            log('👆 Touch/Click detected: ' + event.type);
+            handleInteraction();
+        }
+        
+        // Основная логика взаимодействия
+        function handleInteraction() {
             const currentTime = Date.now();
             const tapLength = currentTime - lastTapTime;
             log('⏱️ Tap length: ' + tapLength);
@@ -763,6 +824,10 @@
             surfaceScanned = false;
             modelPlaced = false;
             
+            // Удаляем обработчики
+            document.body.removeEventListener('touchstart', handleTouch);
+            document.body.removeEventListener('click', handleTouch);
+            
             if (burgerModel) {
                 burgerModel.visible = false;
             }
@@ -770,6 +835,7 @@
             surfaceScanner.style.display = 'none';
             placementCursor.style.display = 'none';
             arPrompt.style.display = 'none';
+            manualPlaceBtn.style.display = 'none';
             
             xrSession = null;
             hitTestSource = null;
