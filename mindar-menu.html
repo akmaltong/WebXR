@@ -28,7 +28,7 @@
         /* Кнопка активации AR */
         .ar-button {
             position: absolute;
-            bottom: 30px;
+            bottom: 90px;
             left: 50%;
             transform: translateX(-50%);
             background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
@@ -90,8 +90,9 @@
     </div>
 
     <!-- 3D Модель -->
-    <model-viewer src="./Hamburger2.glb" ar ar-modes="webxr scene-viewer quick-look" camera-controls
-        tone-mapping="neutral" shadow-intensity="1" auto-rotate rotation-per-second="30deg">
+    <model-viewer src="./Hamburger2.glb" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor"
+        camera-controls tone-mapping="neutral" shadow-intensity="1" auto-rotate rotation-per-second="30deg"
+        interaction-prompt="auto">
 
         <!-- Кастомная кнопка AR -->
         <button slot="ar-button" class="ar-button">
