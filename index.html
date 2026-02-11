@@ -350,7 +350,7 @@
             ar
             ar-modes="webxr"
             ar-scale="fixed"
-            scale="3 3 3"
+            scale="12 12 12"
 
             xr-environment
             camera-orbit="0deg 75deg 2m"
@@ -451,8 +451,8 @@
             
             // Устанавливаем масштаб
             try {
-                modelViewer.scale = '3 3 3';
-                log('📐 Масштаб установлен: 3x');
+                modelViewer.scale = '12 12 12';
+                log('📐 Масштаб установлен: 12x');
             } catch(e) {
                 log('⚠️ Ошибка масштаба: ' + e.message);
             }
@@ -475,7 +475,7 @@
                     log('✅ AR запущен');
                     // Устанавливаем масштаб в AR
                     try {
-                        modelViewer.scale = '3 3 3';
+                        modelViewer.scale = '12 12 12';
                     } catch(e) {}
                     break;
                     
