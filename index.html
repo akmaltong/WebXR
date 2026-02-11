@@ -1,682 +1,159 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>BurgerAR - Ваш бургер в AR</title>
-    
-    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍔 Burger AR - На столе</title>
+    <!-- Подключаем model-viewer -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <style>
-        * {
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-        
-        html, body {
-            width: 100%;
-            height: 100%;
+            background-color: #1a1a1a;
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            height: 100vh;
+            width: 100vw;
             overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #000;
         }
-        
-        #container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-        
+
         model-viewer {
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%);
         }
-        
-        /* Кнопка AR */
-        #ar-btn {
+
+        /* Кнопка активации AR */
+        .ar-button {
             position: absolute;
-            bottom: 40px;
+            bottom: 90px;
             left: 50%;
             transform: translateX(-50%);
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
             color: white;
             border: none;
-            padding: 18px 32px;
+            padding: 15px 30px;
             border-radius: 30px;
-            font-size: 17px;
-            font-weight: 600;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4);
             cursor: pointer;
+            z-index: 100;
             display: flex;
             align-items: center;
             gap: 10px;
-            box-shadow: 0 8px 25px rgba(238, 90, 111, 0.4);
-            z-index: 100;
-        }
-        
-        /* Сканер поверхности */
-        #scanner {
-            position: fixed;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 150px;
-            height: 150px;
-            pointer-events: none;
-            z-index: 99999;
-            display: none;
-        }
-        
-        #scanner.active {
-            display: block;
-        }
-        
-        .scan-ring {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border: 4px solid #00ff00;
-            border-radius: 50%;
-            animation: scan-pulse 1.2s infinite;
-            box-shadow: 0 0 40px rgba(0, 255, 0, 0.8), inset 0 0 30px rgba(0, 255, 0, 0.3);
-        }
-        
-        .scan-text {
-            position: absolute;
-            left: 50%;
-            bottom: -40px;
-            transform: translateX(-50%);
-            color: #00ff00;
-            font-size: 14px;
-            font-weight: 600;
-            text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
             white-space: nowrap;
         }
-        
-        @keyframes scan-pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.7; }
+
+        .ar-button:active {
+            transform: translateX(-50%) scale(0.95);
         }
-        
-        /* Прицел размещения */
-        #target {
-            position: fixed;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 100px;
-            height: 100px;
-            pointer-events: none;
-            z-index: 99999;
-            display: none;
+
+        .ar-icon {
+            width: 24px;
+            height: 24px;
+            fill: white;
         }
-        
-        #target.active {
-            display: block;
-        }
-        
-        .target-ring {
+
+        /* Инфо-панель сверху */
+        .info-panel {
             position: absolute;
-            width: 100%;
-            height: 100%;
-            border: 4px solid #ff0000;
-            border-radius: 50%;
-            animation: target-pulse 0.8s infinite;
-            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8), inset 0 0 20px rgba(255, 0, 0, 0.3);
-        }
-        
-        .target-dot {
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            background: #ff0000;
-            border-radius: 50%;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 20px rgba(255, 0, 0, 1);
-            animation: dot-pulse 0.8s infinite;
-        }
-        
-        @keyframes target-pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.3); }
-        }
-        
-        @keyframes dot-pulse {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.5); }
-        }
-        
-        /* Подсказка */
-        #prompt {
-            position: fixed;
-            left: 50%;
-            top: 15%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.9);
-            padding: 20px 30px;
-            border-radius: 15px;
+            top: 20px;
+            left: 20px;
+            right: 20px;
             text-align: center;
-            z-index: 99998;
-            border: 3px solid;
-            min-width: 280px;
-            display: none;
+            pointer-events: none;
+            z-index: 10;
         }
-        
-        #prompt.scan {
-            display: block;
-            border-color: #00ff00;
-        }
-        
-        #prompt.place {
-            display: block;
-            border-color: #ff0000;
-        }
-        
-        #prompt p {
-            color: white;
-            font-size: 18px;
-            font-weight: 600;
+
+        h1 {
             margin: 0;
+            font-size: 24px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
-        
-        #prompt .sub {
-            color: #aaa;
+
+        p {
+            margin: 5px 0 0;
+            opacity: 0.8;
             font-size: 14px;
-            margin-top: 8px;
-        }
-        
-        /* Инструкция */
-        #instructions {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100000;
-        }
-        
-        .instr-box {
-            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
-            border: 3px solid #ff6b6b;
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 350px;
-            text-align: center;
-        }
-        
-        .instr-box h2 {
-            color: #ff6b6b;
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        
-        .step {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-            color: white;
-            font-size: 15px;
-            text-align: left;
-        }
-        
-        .step-num {
-            width: 28px;
-            height: 28px;
-            background: #ff6b6b;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 13px;
-            flex-shrink: 0;
-        }
-        
-        #start-btn {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-            color: white;
-            border: none;
-            padding: 14px 32px;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 15px;
-        }
-        
-        /* UI */
-        .ui-top {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 20px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
-            z-index: 10;
-            pointer-events: none;
-        }
-        
-        .burger-title {
-            color: white;
-        }
-        
-        .burger-title h1 {
-            font-size: 24px;
-            background: linear-gradient(45deg, #ff6b6b, #feca57);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .price {
-            font-size: 20px;
-            color: #feca57;
-            font-weight: 600;
-        }
-        
-        .hint {
-            position: absolute;
-            bottom: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 13px;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 10px 16px;
-            border-radius: 20px;
-            z-index: 10;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-
-        @keyframes pulse-green {
-            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.4); }
-            50% { box-shadow: 0 0 40px rgba(0, 255, 136, 0.8); }
         }
     </style>
 </head>
+
 <body>
-    <div id="container">
-        <model-viewer
-            id="model"
-            src="Hamburger2.glb"
-            ios-src="Hamburger.usdz"
-            alt="Бургер"
-            camera-controls
-            touch-action="pan-y"
-            shadow-intensity="1"
-            shadow-softness="0.5"
-            exposure="1"
-            camera-orbit="0deg 75deg 3m"
-            min-camera-orbit="auto auto 1.5m"
-            max-camera-orbit="auto auto 10m"
-            ar
-            ar-modes="webxr"
-            ar-scale="fixed"
-            ar-placement="floor"
-            auto-rotate
-            loading="lazy">
-            
-            <div slot="poster" class="ui-top">
-                <div class="burger-title">
-                    <h1>Бургер Классический</h1>
-                    <div class="price">450 ₽</div>
-                </div>
-            </div>
-            
-            <div slot="poster" class="hint">
-                👆 Вращайте • 🤏 Приближайте
-            </div>
-            
-            <button slot="ar-button" id="ar-btn">
-                <span>📱</span>
-                <span>Включить AR</span>
-            </button>
-        </model-viewer>
+
+    <div class="info-panel">
+        <h1 id="dish-name">Загрузка...</h1>
+        <p id="dish-details">...</p>
     </div>
-    
-    <!-- Сканер -->
-    <div id="scanner">
-        <div class="scan-ring"></div>
-        <div class="scan-text">Сканирование...</div>
-    </div>
-    
-    <!-- Прицел -->
-    <div id="target">
-        <div class="target-ring"></div>
-        <div class="target-dot"></div>
-    </div>
-    
-    <!-- Подсказка -->
-    <div id="prompt">
-        <p id="p-title">Сканирование поверхности</p>
-        <p class="sub" id="p-sub">Коснитесь экрана дважды</p>
-    </div>
-    
-    <!-- Инструкция -->
-    <div id="instructions">
-        <div class="instr-box">
-            <h2>📱 Как использовать AR</h2>
-            <div class="step"><span class="step-num">1</span><span>Нажмите кнопку AR</span></div>
-            <div class="step"><span class="step-num">2</span><span>Наведите на стол или пол</span></div>
-            <div class="step"><span class="step-num">3</span><span>Дождитесь зеленого круга</span></div>
-            <div class="step"><span class="step-num">4</span><span>Нажмите "Поставить бургер"</span></div>
-            <button id="start-btn">Начать!</button>
-        </div>
-    </div>
+
+    <!-- 3D Модель -->
+    <model-viewer id="model-viewer" src="" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor"
+        camera-controls tone-mapping="neutral" shadow-intensity="1" auto-rotate rotation-per-second="30deg"
+        interaction-prompt="auto">
+
+        <!-- Кастомная кнопка AR -->
+        <button slot="ar-button" class="ar-button">
+            <svg class="ar-icon" viewBox="0 0 24 24">
+                <path
+                    d="M3 3h2v2H3V3m4 0h2v2H7V3m4 0h2v2h-2V3m4 0h2v2h-2V3m4 0h2v2h-2V3M3 7h2v2H3V7m18 0h2v2h-2V7M3 11h2v2H3v-2m18 0h2v2h-2v-2m-9 2l-7 4v4l7 4 7-4v-4l-7-4m0 2.2l5 2.85V18l-5-2.85V15.2m-5.85 2.85l5-2.85v2.85l-5 2.85V18.05M3 15h2v2H3v-2m18 0h2v2h-2v-2M3 19h2v2H3v-2m4 0h2v2H7v-2m4 0h2v2h-2v-2m4 0h2v2h-2v-2m4 0h2v2h-2v-2z" />
+            </svg>
+            Поставить на стол
+        </button>
+
+    </model-viewer>
 
     <script>
-        const modelViewer = document.getElementById('model');
-        const scanner = document.getElementById('scanner');
-        const target = document.getElementById('target');
-        const prompt = document.getElementById('prompt');
-        const pTitle = document.getElementById('p-title');
-        const pSub = document.getElementById('p-sub');
-        const instructions = document.getElementById('instructions');
-        const startBtn = document.getElementById('start-btn');
-        
-        let arActive = false;
-        let surfaceScanned = false;
-        let modelPlaced = false;
-        let lastTap = 0;
-        let arButton = null;
-
-        // Найдем AR кнопку Model Viewer
-        function findARButton() {
-            arButton = document.querySelector('model-viewer button[slot="ar-button"]');
-            if (arButton) {
-                arButton.addEventListener('click', () => {
-                    // Скрываем модель при входе в AR (будет показана после подтверждения)
-                    setTimeout(() => {
-                        if (modelViewer.scale !== '0.001 0.001 0.001') {
-                            modelViewer.scale = '0.001 0.001 0.001';
-                        }
-                    }, 100);
-                });
+        // 🛠 НАСТРОЙКА МЕНЮ (БАЗА ДАННЫХ)
+        // Добавляйте сюда новые бургеры по аналогии
+        const menuDatabase = {
+            'classic': {
+                name: 'Классический Бургер',
+                price: '450 ₽',
+                desc: 'Сочная говядина, овощи',
+                model: './Hamburger2.glb' // Имя вашего файла
+            },
+            'cheese': {
+                name: 'Чизбургер Делюкс',
+                price: '490 ₽',
+                desc: 'Двойной сыр, котлета',
+                model: './burger_cheese.glb'
+            },
+            'spicy': {
+                name: 'Острый Мексиканский',
+                price: '520 ₽',
+                desc: 'Халапеньо, острый соус',
+                model: './burger_spicy.glb'
+            },
+            'chicken': {
+                name: 'Чикен Бургер',
+                price: '390 ₽',
+                desc: 'Куриное филе, соус ранч',
+                model: './burger_chicken.glb'
+            },
+            'vegan': {
+                name: 'Веган Бургер',
+                price: '550 ₽',
+                desc: 'Растительная котлета, авокадо',
+                model: './burger_vegan.glb'
             }
-        }
-        findARButton();
-
-        // Закрыть инструкцию и сохранить в localStorage
-        startBtn.addEventListener('click', () => {
-            instructions.style.display = 'none';
-            localStorage.setItem('ar-instructions-shown', 'true');
-        });
-
-        // Проверяем показывали ли инструкцию
-        if (localStorage.getItem('ar-instructions-shown')) {
-            instructions.style.display = 'none';
-        }
-
-        // Загрузка модели
-        modelViewer.addEventListener('load', () => {
-            console.log('✅ Модель загружена');
-        });
-        
-        // AR статус
-        modelViewer.addEventListener('ar-status', (e) => {
-            console.log('AR:', e.detail.status);
-
-            if (e.detail.status === 'session-started') {
-                arActive = true;
-                surfaceScanned = false;
-                modelPlaced = false;
-
-                // Немедленно скрываем модель - она появится только по кнопке
-                modelViewer.scale = '0.001 0.001 0.001';
-
-                // Показываем UI размещения
-                setTimeout(showPlacementUI, 100);
-
-            } else if (e.detail.status === 'not-presenting') {
-                arActive = false;
-                hideAllUI();
-                // Возвращаем нормальный масштаб при выходе из AR
-                modelViewer.scale = '1 1 1';
-            } else if (e.detail.status === 'object-placed') {
-                // Если Model Viewer автоматически разместил, но мы еще не нажали кнопку
-                if (!modelPlaced) {
-                    console.log('⚠️ Авто-размещение отключено');
-                    modelViewer.scale = '0.001 0.001 0.001';
-                }
-            }
-        });
-
-        // Отслеживаем когда Model Viewer пытается показать модель в AR
-        const originalSetAttribute = modelViewer.setAttribute.bind(modelViewer);
-        modelViewer.setAttribute = function(name, value) {
-            // Если это scale и мы в AR без подтверждения - блокируем
-            if (name === 'scale' && arActive && !modelPlaced && value !== '0.001 0.001 0.001') {
-                console.log('⛔ Блокировка авто-масштаба в AR');
-                return originalSetAttribute(name, '0.001 0.001 0.001');
-            }
-            return originalSetAttribute(name, value);
         };
 
-        // Обработка события обнаружения поверхности
-        modelViewer.addEventListener('ar-tracking', (e) => {
-            if (!arActive) return;
+        // Логика загрузки
+        const params = new URLSearchParams(window.location.search);
+        const dishId = params.get('id') || 'classic'; // Если нет id, открываем classic
+        const dish = menuDatabase[dishId] || menuDatabase['classic'];
 
-            const status = e.detail.status;
-            console.log('Tracking:', status);
+        // Обновляем страницу
+        document.getElementById('dish-name').textContent = dish.name;
+        document.getElementById('dish-details').textContent = `${dish.price} • ${dish.desc}`;
+        document.getElementById('model-viewer').src = dish.model;
 
-            if (status === 'tracking') {
-                // Поверхность найдена - показываем что можно размещать
-                if (!surfaceScanned) {
-                    surfaceScanned = true;
-                    showReadyToPlaceUI();
-                }
-            } else if (status === 'not-tracking') {
-                // Потеряли поверхность
-                surfaceScanned = false;
-                showScanUI();
-            }
-        });
-        
-        function showPlacementUI() {
-            // Показываем начальный UI
-            scanner.classList.add('active');
-            prompt.classList.add('scan');
-            prompt.classList.remove('place');
-            pTitle.textContent = '🔍 Сканирование поверхности';
-            pSub.textContent = 'Наведите на стол или пол';
-            target.classList.remove('active');
-        }
-
-        function showScanUI() {
-            scanner.classList.add('active');
-            prompt.classList.add('scan');
-            prompt.classList.remove('place');
-            pTitle.textContent = '🔍 Сканирование...';
-            pSub.textContent = 'Двигайте телефон медленно';
-            target.classList.remove('active');
-        }
-
-        function showReadyToPlaceUI() {
-            scanner.classList.remove('active');
-            target.classList.add('active');
-            prompt.classList.remove('scan');
-            prompt.classList.add('place');
-            pTitle.textContent = '🍔 Место найдено!';
-            pSub.textContent = 'Нажмите кнопку "Поставить"';
-            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-
-            // Показываем кнопку размещения
-            showPlaceButton();
-        }
-
-        function showPlaceButton() {
-            // Создаем или показываем кнопку размещения
-            let placeBtn = document.getElementById('place-btn');
-            if (!placeBtn) {
-                placeBtn = document.createElement('button');
-                placeBtn.id = 'place-btn';
-                placeBtn.innerHTML = '<span>🍔</span><span>Поставить бургер</span>';
-                placeBtn.style.cssText = `
-                    position: fixed;
-                    bottom: 120px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
-                    color: white;
-                    border: none;
-                    padding: 18px 32px;
-                    border-radius: 30px;
-                    font-size: 17px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
-                    z-index: 999999;
-                    animation: fadeIn 0.3s ease;
-                `;
-                placeBtn.addEventListener('click', placeModel);
-                document.body.appendChild(placeBtn);
-            }
-            placeBtn.style.display = 'flex';
-        }
-
-        function hidePlaceButton() {
-            const placeBtn = document.getElementById('place-btn');
-            if (placeBtn) placeBtn.style.display = 'none';
-        }
-
-        function placeModel() {
-            if (modelPlaced) return;
-
-            modelPlaced = true;
-            // Масштаб 1 1 1 для AR (Model Viewer сам управляет масштабом в AR)
-            modelViewer.scale = '1 1 1';
-
-            // Скрываем UI размещения
-            hidePlaceButton();
-            scanner.classList.remove('active');
-            target.classList.remove('active');
-            prompt.classList.remove('scan', 'place');
-
-            // Меняем на UI управления
-            showControlsUI();
-
-            if (navigator.vibrate) navigator.vibrate(50);
-            console.log('✅ Модель размещена');
-        }
-
-        function showControlsUI() {
-            // Показываем кнопку сброса
-            let resetBtn = document.getElementById('reset-btn');
-            if (!resetBtn) {
-                resetBtn = document.createElement('button');
-                resetBtn.id = 'reset-btn';
-                resetBtn.innerHTML = '<span>↺</span><span>Переместить</span>';
-                resetBtn.style.cssText = `
-                    position: fixed;
-                    bottom: 40px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: rgba(255, 255, 255, 0.2);
-                    color: white;
-                    border: 2px solid white;
-                    padding: 12px 24px;
-                    border-radius: 25px;
-                    font-size: 15px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    z-index: 999999;
-                    backdrop-filter: blur(10px);
-                `;
-                resetBtn.addEventListener('click', resetPlacement);
-                document.body.appendChild(resetBtn);
-            }
-            resetBtn.style.display = 'flex';
-
-            // Показываем подсказку
-            prompt.classList.add('place');
-            pTitle.textContent = '✅ Бургер размещен!';
-            pSub.textContent = 'Можете двигать телефон вокруг';
-            prompt.style.display = 'block';
-
-            // Скрываем подсказку через 3 секунды
-            setTimeout(() => {
-                if (modelPlaced) {
-                    prompt.style.display = 'none';
-                }
-            }, 3000);
-        }
-
-        function hideControlsUI() {
-            const resetBtn = document.getElementById('reset-btn');
-            if (resetBtn) resetBtn.style.display = 'none';
-        }
-
-        function resetPlacement() {
-            modelPlaced = false;
-            surfaceScanned = false;
-            modelViewer.scale = '0.001 0.001 0.001';
-            hideControlsUI();
-            showPlacementUI();
-        }
-
-        function hideAllUI() {
-            scanner.classList.remove('active');
-            target.classList.remove('active');
-            prompt.classList.remove('scan', 'place');
-            prompt.style.display = 'none';
-            hidePlaceButton();
-            hideControlsUI();
-        }
-        
-        // Двойной тап как альтернатива кнопке
-        document.addEventListener('touchstart', handleTouch, { passive: false });
-        document.addEventListener('click', handleTouch);
-
-        function handleTouch(e) {
-            if (!arActive) return;
-            if (e.type === 'touchstart') e.preventDefault();
-
-            // Игнорируем касания по кнопкам
-            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-
-            const now = Date.now();
-            const diff = now - lastTap;
-
-            if (diff < 300 && diff > 0) {
-                // Двойной тап - размещаем если поверхность найдена
-                if (surfaceScanned && !modelPlaced) {
-                    placeModel();
-                }
-                lastTap = 0;
-            } else {
-                lastTap = now;
-            }
-        }
-        
-        // Проверка AR
-        if ('xr' in navigator) {
-            navigator.xr.isSessionSupported('immersive-ar').then(supported => {
-                if (!supported) {
-                    startBtn.textContent = 'AR недоступен';
-                    startBtn.disabled = true;
-                }
-            });
-        }
-        
-        // Запрет зума
-        document.addEventListener('gesturestart', e => e.preventDefault());
+        console.log(`🍔 Загружен бургер: ${dishId}`);
     </script>
+
 </body>
+
 </html>
