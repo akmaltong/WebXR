@@ -35,6 +35,11 @@
             height: 100%;
             background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
             --poster-color: transparent;
+            --model-viewer-scale: 8 8 8;
+        }
+        
+        model-viewer[ar-status="session-started"] {
+            --model-viewer-scale: 0 0 0;
         }
         
         /* Кнопка AR */
@@ -125,6 +130,59 @@
             100% { transform: translate(-50%, -50%) scale(1); }
         }
         
+        /* Сканирование поверхности */
+        .scanning-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 5px solid #00ff00;
+            border-radius: 50%;
+            animation: scanPulse 1.2s infinite ease-in-out;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.8), inset 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        
+        @keyframes scanPulse {
+            0% { transform: scale(1); opacity: 1; border-width: 5px; }
+            50% { transform: scale(1.3); opacity: 0.6; border-width: 3px; }
+            100% { transform: scale(1); opacity: 1; border-width: 5px; }
+        }
+        
+        .scanning-dots {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, 
+                rgba(0, 255, 0, 0.8) 2px, 
+                transparent 2px);
+            background-size: 20px 20px;
+            animation: scanDots 1s linear infinite;
+            opacity: 0.6;
+        }
+        
+        @keyframes scanDots {
+            0% { background-position: 0 0; }
+            100% { background-position: 20px 20px; }
+        }
+        
+        .scanning-text {
+            position: absolute;
+            left: 50%;
+            top: 120%;
+            transform: translateX(-50%);
+            color: #00ff00;
+            font-size: 14px;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+            white-space: nowrap;
+            animation: scanText 1.2s infinite ease-in-out;
+        }
+        
+        @keyframes scanText {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
         /* Подсказка AR */
         #ar-prompt {
             position: fixed;
@@ -171,6 +229,92 @@
             font-size: 18px;
             margin-top: 15px;
             font-weight: 600;
+        }
+        
+        /* Инструкция перед AR */
+        #ar-instructions {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        #ar-instructions.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .instruction-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+            border: 3px solid #ff6b6b;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 350px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .instruction-content h2 {
+            color: #ff6b6b;
+            font-size: 24px;
+            margin-bottom: 25px;
+        }
+        
+        .instruction-steps {
+            text-align: left;
+            margin-bottom: 25px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .step:last-child {
+            margin-bottom: 0;
+        }
+        
+        .step-num {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        #close-instructions {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        #close-instructions:hover {
+            transform: scale(1.05);
         }
         
         /* Ошибка AR */
@@ -366,7 +510,7 @@
             scale="8 8 8"
             ar-placement="floor"
             xr-environment
-            camera-orbit="0deg 75deg 5m"
+            camera-orbit="0deg 75deg 3m"
             min-camera-orbit="auto auto 3m"
             max-camera-orbit="auto auto 10m"
             field-of-view="60deg"
@@ -375,7 +519,8 @@
             auto-rotate="false"
             interaction-prompt="none"
             loading="eager"
-            reveal="auto">
+            reveal="auto"
+            style="--model-viewer-scale: 0 0 0;">
             
             <!-- Верхняя панель с информацией -->
             <div slot="poster" class="top-bar">
@@ -428,6 +573,32 @@
         <p class="hint-subtitle">Чтобы разместить бургер на столе</p>
     </div>
     
+        <!-- Инструкция перед AR -->
+    <div id="ar-instructions">
+        <div class="instruction-content">
+            <h2>📱 Как использовать AR</h2>
+            <div class="instruction-steps">
+                <div class="step">
+                    <span class="step-num">1</span>
+                    <span class="step-text">Нажмите кнопку AR</span>
+                </div>
+                <div class="step">
+                    <span class="step-num">2</span>
+                    <span class="step-text">Наведите на поверхность</span>
+                </div>
+                <div class="step">
+                    <span class="step-num">3</span>
+                    <span class="step-text">Двойной тап чтобы отсканировать</span>
+                </div>
+                <div class="step">
+                    <span class="step-num">4</span>
+                    <span class="step-text">Еще раз двойной тап для бургера!</span>
+                </div>
+            </div>
+            <button id="close-instructions">Понятно!</button>
+        </div>
+    </div>
+    
     <!-- Ошибка AR -->
     <div id="ar-error">
         <p>😕 AR временно недоступен</p>
@@ -443,7 +614,20 @@
         const arCursor = document.getElementById('ar-cursor');
         const arPrompt = document.getElementById('ar-prompt');
         const arError = document.getElementById('ar-error');
+        const arInstructions = document.getElementById('ar-instructions');
+        const closeInstructionsBtn = document.getElementById('close-instructions');
         const debugInfo = document.getElementById('debug-info');
+        
+        // Показываем инструкцию при первом посещении
+        let instructionsShown = localStorage.getItem('arInstructionsShown');
+        if (!instructionsShown) {
+            arInstructions.classList.add('visible');
+        }
+        
+        closeInstructionsBtn.addEventListener('click', () => {
+            arInstructions.classList.remove('visible');
+            localStorage.setItem('arInstructionsShown', 'true');
+        });
         
         // Отладка
         function log(message) {
@@ -492,16 +676,58 @@
             if (e.detail.status === 'session-started') {
                 arActive = true;
                 modelPlaced = false;
+                surfaceScanned = false;
+                scanningActive = false;
                 
-                // Показываем прицел и подсказку
+                // Скрываем инструкцию если открыта
+                if (arInstructions) arInstructions.classList.remove('visible');
+                
+                // Сначала показываем сканер поверхности
                 if (arCursor) arCursor.classList.add('visible');
                 if (arPrompt) arPrompt.classList.add('visible');
                 
-                log('👆 Показан прицел, ждем клик');
+                // Запускаем фазу сканирования
+                startScanning();
+                
+                log('🔍 Сканирование поверхности...');
                 
             } else if (e.detail.status === 'not-presenting') {
                 arActive = false;
                 modelPlaced = false;
+                surfaceScanned = false;
+                scanningActive = false;
+                
+                // Сбрасываем масштаб модели
+                modelViewer.style.setProperty('--model-viewer-scale', '8 8 8');
+                modelViewer.scale = '8 8 8';
+                
+                // Восстанавливаем оригинальный прицел
+                if (arCursor) {
+                    arCursor.innerHTML = `
+                        <div class="cursor-ring"></div>
+                        <div class="cursor-dot"></div>
+                    `;
+                }
+                
+                // Восстанавливаем оригинальную подсказку
+                if (arPrompt) {
+                    arPrompt.innerHTML = `
+                        <div class="tap-icon">
+                            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="50" cy="50" r="45" stroke="white" stroke-width="3" fill="rgba(255,255,255,0.1)"/>
+                                <circle cx="50" cy="50" r="35" stroke="#ff0000" stroke-width="5" fill="none">
+                                    <animate attributeName="r" values="30;45;30" dur="0.8s" repeatCount="indefinite"/>
+                                    <animate attributeName="opacity" values="1;0.3;1" dur="0.8s" repeatCount="indefinite"/>
+                                </circle>
+                                <circle cx="50" cy="50" r="15" fill="#ff0000">
+                                    <animate attributeName="r" values="15;20;15" dur="0.8s" repeatCount="indefinite"/>
+                                </circle>
+                            </svg>
+                        </div>
+                        <p>👆 НАЖМИТЕ НА ЭКРАН</p>
+                        <p class="hint-subtitle">Чтобы разместить бургер на столе</p>
+                    `;
+                }
                 
                 // Скрываем прицел и подсказку
                 if (arCursor) arCursor.classList.remove('visible');
@@ -516,29 +742,136 @@
             }
         });
         
-        // Обработка клика/тача для размещения
-        function handlePlace(e) {
-            if (!arActive || modelPlaced) return;
+        // Сканирование поверхности
+        let surfaceScanned = false;
+        let scanningActive = false;
+        
+        function startScanning() {
+            scanningActive = true;
+            log('🔍 Сканирование поверхности...');
+            
+            // Скрываем модель изначально
+            modelViewer.style.setProperty('--model-viewer-scale', '0 0 0');
+            
+            // Показываем индикатор сканирования
+            if (arCursor) {
+                arCursor.innerHTML = `
+                    <div class="scanning-ring"></div>
+                    <div class="scanning-dots"></div>
+                    <div class="scanning-text">Сканирование...</div>
+                `;
+            }
+            
+            // Обновляем подсказку
+            if (arPrompt) {
+                arPrompt.innerHTML = `
+                    <div class="tap-icon">
+                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="45" stroke="white" stroke-width="3" fill="rgba(255,255,255,0.1)"/>
+                            <circle cx="50" cy="50" r="35" stroke="#00ff00" stroke-width="5" fill="none">
+                                <animate attributeName="r" values="30;45;30" dur="0.8s" repeatCount="indefinite"/>
+                                <animate attributeName="opacity" values="1;0.3;1" dur="0.8s" repeatCount="indefinite"/>
+                            </circle>
+                            <circle cx="50" cy="50" r="15" fill="#00ff00">
+                                <animate attributeName="r" values="15;20;15" dur="0.8s" repeatCount="indefinite"/>
+                            </circle>
+                        </svg>
+                    </div>
+                    <p>👆 ДВОЙНОЙ ТАП</p>
+                    <p class="hint-subtitle">Чтобы зафиксировать поверхность</p>
+                `;
+            }
+        }
+        
+        function showPlacementPrompt() {
+            surfaceScanned = true;
+            scanningActive = false;
+            
+            // Меняем прицел на размещение
+            if (arCursor) {
+                arCursor.innerHTML = `
+                    <div class="cursor-ring"></div>
+                    <div class="cursor-dot"></div>
+                `;
+            }
+            
+            // Обновляем подсказку для размещения бургера
+            if (arPrompt) {
+                arPrompt.innerHTML = `
+                    <div class="tap-icon">
+                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="45" stroke="white" stroke-width="3" fill="rgba(255,255,255,0.1)"/>
+                            <circle cx="50" cy="50" r="35" stroke="#ff0000" stroke-width="5" fill="none">
+                                <animate attributeName="r" values="30;45;30" dur="0.8s" repeatCount="indefinite"/>
+                                <animate attributeName="opacity" values="1;0.3;1" dur="0.8s" repeatCount="indefinite"/>
+                            </circle>
+                            <circle cx="50" cy="50" r="15" fill="#ff0000">
+                                <animate attributeName="r" values="15;20;15" dur="0.8s" repeatCount="indefinite"/>
+                            </circle>
+                        </svg>
+                    </div>
+                    <p>🍔 ГОТОВО!</p>
+                    <p class="hint-subtitle">Двойной тап чтобы разместить бургер</p>
+                `;
+            }
+            
+            // Вибрация
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]);
+            }
+            
+            log('✅ Поверхность найдена!');
+        }
+        
+        // Обработка двойного клика/тача
+        let lastTapTime = 0;
+        const DOUBLE_TAP_DELAY = 300;
+        
+        function handleDoubleTap(e) {
+            if (!arActive) return;
             
             // Проверяем, что клик не по кнопке
             if (e.target.closest('button') || e.target.closest('#ar-error')) return;
             
-            modelPlaced = true;
-            log('✅ Размещено!');
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
             
-            // Скрываем прицел и подсказку
-            if (arCursor) arCursor.classList.remove('visible');
-            if (arPrompt) arPrompt.classList.remove('visible');
-            
-            // Вибрация
-            if (navigator.vibrate) {
-                navigator.vibrate(50);
+            if (tapLength < DOUBLE_TAP_DELAY && tapLength > 0) {
+                // Это двойной тап
+                e.preventDefault();
+                
+                if (!surfaceScanned) {
+                    // Первый двойной тап - фиксируем поверхность
+                    showPlacementPrompt();
+                } else if (!modelPlaced) {
+                    // Второй двойной тап - размещаем бургер
+                    modelPlaced = true;
+                    log('✅ Бургер размещен!');
+                    
+                    // Показываем модель
+                    modelViewer.style.setProperty('--model-viewer-scale', '8 8 8');
+                    modelViewer.scale = '8 8 8';
+                    
+                    // Скрываем прицел и подсказку
+                    if (arCursor) arCursor.classList.remove('visible');
+                    if (arPrompt) arPrompt.classList.remove('visible');
+                    
+                    // Вибрация
+                    if (navigator.vibrate) {
+                        navigator.vibrate(50);
+                    }
+                }
+                
+                lastTapTime = 0;
+            } else {
+                // Это первый тап
+                lastTapTime = currentTime;
             }
         }
         
-        // Слушаем клики и тачи
-        document.addEventListener('click', handlePlace);
-        document.addEventListener('touchstart', handlePlace, {passive: true});
+        // Слушаем тачи для двойного тапа
+        document.addEventListener('touchstart', handleDoubleTap, {passive: false});
+        document.addEventListener('dblclick', handleDoubleTap);
         
         // Проверка поддержки AR
         async function checkAR() {
