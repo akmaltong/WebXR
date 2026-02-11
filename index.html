@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>BurgerAR</title>
+    <title>BurgerAR - Ваш бургер в AR</title>
 
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
@@ -219,9 +219,10 @@
 
 <body>
     <div id="container">
+        <!-- Scale set to 4 4 4 for visibility in 3D -->
         <model-viewer id="model" src="Hamburger2.glb" ios-src="Hamburger.usdz" alt="Бургер" camera-controls
             touch-action="pan-y" shadow-intensity="1" shadow-softness="0.5" exposure="1" camera-orbit="0deg 75deg 3m"
-            min-camera-orbit="auto auto 1.5m" max-camera-orbit="auto auto 10m" ar
+            min-camera-orbit="auto auto 1.5m" max-camera-orbit="auto auto 10m" scale="4 4 4" ar
             ar-modes="webxr scene-viewer quick-look" ar-scale="auto" ar-placement="floor" auto-rotate loading="lazy">
 
             <button slot="ar-button" id="ar-btn">
@@ -258,12 +259,6 @@
         let lastTap = 0;
         let arButton = null;
 
-        // JS logic for handling AR button click removed
-        function findARButton() {
-            // No custom logic needed
-        }
-        findARButton();
-
         // Загрузка модели
         modelViewer.addEventListener('load', () => {
             console.log('✅ Модель загружена');
@@ -278,18 +273,22 @@
                 surfaceScanned = false;
                 modelPlaced = false;
 
+                // В AR делаем масштаб меньше и комфортнее (0.5), чем в 3D (4)
+                // Так как ar-scale="auto", пользователь МОЖЕТ изменить размер щипком
+                modelViewer.scale = '0.5 0.5 0.5';
+
                 // Показываем UI размещения
                 setTimeout(showPlacementUI, 100);
 
             } else if (e.detail.status === 'not-presenting') {
                 arActive = false;
                 hideAllUI();
+                // Возвращаем масштаб для 3D режима
+                modelViewer.scale = '4 4 4';
             } else if (e.detail.status === 'object-placed') {
                 // Default
             }
         });
-
-        // Scale blocking logic removed
 
         // Обработка события обнаружения поверхности
         modelViewer.addEventListener('ar-tracking', (e) => {
@@ -379,7 +378,7 @@
             if (modelPlaced) return;
 
             modelPlaced = true;
-            // Native placement used
+            // Здесь мы НЕ меняем scale, чтобы остался тот, который мы задали при входе (0.5), или который настроил пользователь
 
             // Скрываем UI размещения
             hidePlaceButton();
@@ -406,7 +405,7 @@
                     bottom: 40px;
                     left: 50%;
                     transform: translateX(-50%);
-                    background: rgba(0, 0, 0, 0.2);
+                    background: rgba(0, 0, 0, 0.1);
                     color: #333;
                     border: 2px solid #333;
                     padding: 12px 24px;
@@ -445,7 +444,8 @@
         function resetPlacement() {
             modelPlaced = false;
             surfaceScanned = false;
-            // Scale reset removed
+            // При сбросе возвращаем комфортный размер для AR
+            modelViewer.scale = '0.5 0.5 0.5';
             hideControlsUI();
             showPlacementUI();
         }
