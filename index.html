@@ -293,6 +293,16 @@
             border-radius: 20px;
             z-index: 10;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(0, 255, 136, 0.8); }
+        }
     </style>
 </head>
 <body>
@@ -308,14 +318,13 @@
             shadow-softness="0.5"
             exposure="1"
             camera-orbit="0deg 75deg 3m"
-            min-camera-orbit="auto auto 3m"
+            min-camera-orbit="auto auto 1.5m"
             max-camera-orbit="auto auto 10m"
-            scale="0.001 0.001 0.001"
             ar
             ar-modes="webxr"
             ar-scale="fixed"
             ar-placement="floor"
-            reveal="manual"
+            auto-rotate
             loading="lazy">
             
             <div slot="poster" class="ui-top">
@@ -359,9 +368,9 @@
         <div class="instr-box">
             <h2>📱 Как использовать AR</h2>
             <div class="step"><span class="step-num">1</span><span>Нажмите кнопку AR</span></div>
-            <div class="step"><span class="step-num">2</span><span>Наведите на стол</span></div>
-            <div class="step"><span class="step-num">3</span><span>Двойной тап → скан</span></div>
-            <div class="step"><span class="step-num">4</span><span>Еще раз → бургер!</span></div>
+            <div class="step"><span class="step-num">2</span><span>Наведите на стол или пол</span></div>
+            <div class="step"><span class="step-num">3</span><span>Дождитесь зеленого круга</span></div>
+            <div class="step"><span class="step-num">4</span><span>Нажмите "Поставить бургер"</span></div>
             <button id="start-btn">Начать!</button>
         </div>
     </div>
@@ -380,89 +389,274 @@
         let surfaceScanned = false;
         let modelPlaced = false;
         let lastTap = 0;
-        
-        // Закрыть инструкцию
+        let arButton = null;
+
+        // Найдем AR кнопку Model Viewer
+        function findARButton() {
+            arButton = document.querySelector('model-viewer button[slot="ar-button"]');
+            if (arButton) {
+                arButton.addEventListener('click', () => {
+                    // Скрываем модель при входе в AR (будет показана после подтверждения)
+                    setTimeout(() => {
+                        if (modelViewer.scale !== '0.001 0.001 0.001') {
+                            modelViewer.scale = '0.001 0.001 0.001';
+                        }
+                    }, 100);
+                });
+            }
+        }
+        findARButton();
+
+        // Закрыть инструкцию и сохранить в localStorage
         startBtn.addEventListener('click', () => {
             instructions.style.display = 'none';
+            localStorage.setItem('ar-instructions-shown', 'true');
         });
-        
+
+        // Проверяем показывали ли инструкцию
+        if (localStorage.getItem('ar-instructions-shown')) {
+            instructions.style.display = 'none';
+        }
+
         // Загрузка модели
         modelViewer.addEventListener('load', () => {
             console.log('✅ Модель загружена');
-            modelViewer.scale = '8 8 8';
         });
         
         // AR статус
         modelViewer.addEventListener('ar-status', (e) => {
             console.log('AR:', e.detail.status);
-            
+
             if (e.detail.status === 'session-started') {
                 arActive = true;
                 surfaceScanned = false;
                 modelPlaced = false;
-                
-                // Скрываем модель
+
+                // Немедленно скрываем модель - она появится только по кнопке
                 modelViewer.scale = '0.001 0.001 0.001';
-                
-                // Показываем сканер
-                showScanUI();
-                
+
+                // Показываем UI размещения
+                setTimeout(showPlacementUI, 100);
+
             } else if (e.detail.status === 'not-presenting') {
                 arActive = false;
                 hideAllUI();
-                modelViewer.scale = '8 8 8';
+                // Возвращаем нормальный масштаб при выходе из AR
+                modelViewer.scale = '1 1 1';
+            } else if (e.detail.status === 'object-placed') {
+                // Если Model Viewer автоматически разместил, но мы еще не нажали кнопку
+                if (!modelPlaced) {
+                    console.log('⚠️ Авто-размещение отключено');
+                    modelViewer.scale = '0.001 0.001 0.001';
+                }
+            }
+        });
+
+        // Отслеживаем когда Model Viewer пытается показать модель в AR
+        const originalSetAttribute = modelViewer.setAttribute.bind(modelViewer);
+        modelViewer.setAttribute = function(name, value) {
+            // Если это scale и мы в AR без подтверждения - блокируем
+            if (name === 'scale' && arActive && !modelPlaced && value !== '0.001 0.001 0.001') {
+                console.log('⛔ Блокировка авто-масштаба в AR');
+                return originalSetAttribute(name, '0.001 0.001 0.001');
+            }
+            return originalSetAttribute(name, value);
+        };
+
+        // Обработка события обнаружения поверхности
+        modelViewer.addEventListener('ar-tracking', (e) => {
+            if (!arActive) return;
+
+            const status = e.detail.status;
+            console.log('Tracking:', status);
+
+            if (status === 'tracking') {
+                // Поверхность найдена - показываем что можно размещать
+                if (!surfaceScanned) {
+                    surfaceScanned = true;
+                    showReadyToPlaceUI();
+                }
+            } else if (status === 'not-tracking') {
+                // Потеряли поверхность
+                surfaceScanned = false;
+                showScanUI();
             }
         });
         
+        function showPlacementUI() {
+            // Показываем начальный UI
+            scanner.classList.add('active');
+            prompt.classList.add('scan');
+            prompt.classList.remove('place');
+            pTitle.textContent = '🔍 Сканирование поверхности';
+            pSub.textContent = 'Наведите на стол или пол';
+            target.classList.remove('active');
+        }
+
         function showScanUI() {
             scanner.classList.add('active');
             prompt.classList.add('scan');
             prompt.classList.remove('place');
-            pTitle.textContent = '🔍 Сканирование';
-            pSub.textContent = 'Коснитесь экрана дважды';
+            pTitle.textContent = '🔍 Сканирование...';
+            pSub.textContent = 'Двигайте телефон медленно';
             target.classList.remove('active');
         }
-        
-        function showTargetUI() {
+
+        function showReadyToPlaceUI() {
             scanner.classList.remove('active');
             target.classList.add('active');
             prompt.classList.remove('scan');
             prompt.classList.add('place');
-            pTitle.textContent = '🍔 Готово!';
-            pSub.textContent = 'Коснитесь еще раз';
+            pTitle.textContent = '🍔 Место найдено!';
+            pSub.textContent = 'Нажмите кнопку "Поставить"';
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+            // Показываем кнопку размещения
+            showPlaceButton();
         }
-        
+
+        function showPlaceButton() {
+            // Создаем или показываем кнопку размещения
+            let placeBtn = document.getElementById('place-btn');
+            if (!placeBtn) {
+                placeBtn = document.createElement('button');
+                placeBtn.id = 'place-btn';
+                placeBtn.innerHTML = '<span>🍔</span><span>Поставить бургер</span>';
+                placeBtn.style.cssText = `
+                    position: fixed;
+                    bottom: 120px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+                    color: white;
+                    border: none;
+                    padding: 18px 32px;
+                    border-radius: 30px;
+                    font-size: 17px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
+                    z-index: 999999;
+                    animation: fadeIn 0.3s ease;
+                `;
+                placeBtn.addEventListener('click', placeModel);
+                document.body.appendChild(placeBtn);
+            }
+            placeBtn.style.display = 'flex';
+        }
+
+        function hidePlaceButton() {
+            const placeBtn = document.getElementById('place-btn');
+            if (placeBtn) placeBtn.style.display = 'none';
+        }
+
         function placeModel() {
+            if (modelPlaced) return;
+
             modelPlaced = true;
-            modelViewer.scale = '8 8 8';
-            hideAllUI();
+            // Масштаб 1 1 1 для AR (Model Viewer сам управляет масштабом в AR)
+            modelViewer.scale = '1 1 1';
+
+            // Скрываем UI размещения
+            hidePlaceButton();
+            scanner.classList.remove('active');
+            target.classList.remove('active');
+            prompt.classList.remove('scan', 'place');
+
+            // Меняем на UI управления
+            showControlsUI();
+
             if (navigator.vibrate) navigator.vibrate(50);
+            console.log('✅ Модель размещена');
         }
-        
+
+        function showControlsUI() {
+            // Показываем кнопку сброса
+            let resetBtn = document.getElementById('reset-btn');
+            if (!resetBtn) {
+                resetBtn = document.createElement('button');
+                resetBtn.id = 'reset-btn';
+                resetBtn.innerHTML = '<span>↺</span><span>Переместить</span>';
+                resetBtn.style.cssText = `
+                    position: fixed;
+                    bottom: 40px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(255, 255, 255, 0.2);
+                    color: white;
+                    border: 2px solid white;
+                    padding: 12px 24px;
+                    border-radius: 25px;
+                    font-size: 15px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    z-index: 999999;
+                    backdrop-filter: blur(10px);
+                `;
+                resetBtn.addEventListener('click', resetPlacement);
+                document.body.appendChild(resetBtn);
+            }
+            resetBtn.style.display = 'flex';
+
+            // Показываем подсказку
+            prompt.classList.add('place');
+            pTitle.textContent = '✅ Бургер размещен!';
+            pSub.textContent = 'Можете двигать телефон вокруг';
+            prompt.style.display = 'block';
+
+            // Скрываем подсказку через 3 секунды
+            setTimeout(() => {
+                if (modelPlaced) {
+                    prompt.style.display = 'none';
+                }
+            }, 3000);
+        }
+
+        function hideControlsUI() {
+            const resetBtn = document.getElementById('reset-btn');
+            if (resetBtn) resetBtn.style.display = 'none';
+        }
+
+        function resetPlacement() {
+            modelPlaced = false;
+            surfaceScanned = false;
+            modelViewer.scale = '0.001 0.001 0.001';
+            hideControlsUI();
+            showPlacementUI();
+        }
+
         function hideAllUI() {
             scanner.classList.remove('active');
             target.classList.remove('active');
             prompt.classList.remove('scan', 'place');
+            prompt.style.display = 'none';
+            hidePlaceButton();
+            hideControlsUI();
         }
         
-        // Двойной тап
+        // Двойной тап как альтернатива кнопке
         document.addEventListener('touchstart', handleTouch, { passive: false });
         document.addEventListener('click', handleTouch);
-        
+
         function handleTouch(e) {
             if (!arActive) return;
             if (e.type === 'touchstart') e.preventDefault();
-            
+
+            // Игнорируем касания по кнопкам
+            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+
             const now = Date.now();
             const diff = now - lastTap;
-            
+
             if (diff < 300 && diff > 0) {
-                // Двойной тап
-                if (!surfaceScanned) {
-                    surfaceScanned = true;
-                    showTargetUI();
-                } else if (!modelPlaced) {
+                // Двойной тап - размещаем если поверхность найдена
+                if (surfaceScanned && !modelPlaced) {
                     placeModel();
                 }
                 lastTap = 0;
