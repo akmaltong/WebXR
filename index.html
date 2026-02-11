@@ -35,8 +35,6 @@
             height: 100%;
             background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
             --poster-color: transparent;
-            /* Увеличиваем масштаб в 3 раза */
-            --scale: 3;
         }
         
         /* Кнопка AR */
@@ -75,51 +73,17 @@
             font-size: 22px;
         }
         
-        /* Подсказка AR */
-        #ar-prompt {
-            position: absolute;
-            left: 50%;
-            top: 40%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            display: none;
-            animation: fadeIn 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            max-width: 300px;
-            width: 90%;
-            z-index: 100;
-        }
-        
-        model-viewer[ar-status="session-started"] > #ar-prompt {
-            display: block;
-        }
-        
-        .tap-icon {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 15px;
-        }
-        
-        .tap-icon svg {
-            width: 100%;
-            height: 100%;
-        }
-        
-        /* Прицел AR */
+        /* Прицел AR - большой и заметный */
         #ar-cursor {
             position: absolute;
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
+            width: 80px;
+            height: 80px;
             pointer-events: none;
             display: none;
-            z-index: 50;
+            z-index: 9999;
         }
         
         model-viewer[ar-status="session-started"] > #ar-cursor {
@@ -130,41 +94,84 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            border: 3px solid rgba(255, 107, 107, 0.8);
+            border: 4px solid #ff6b6b;
             border-radius: 50%;
-            animation: pulse 1.5s infinite;
+            animation: cursorPulse 1s infinite ease-in-out;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
         }
         
         .cursor-dot {
             position: absolute;
-            width: 12px;
-            height: 12px;
+            width: 16px;
+            height: 16px;
             background: #ff6b6b;
             border-radius: 50%;
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
+            box-shadow: 0 0 20px rgba(255, 107, 107, 1);
+            animation: dotPulse 1s infinite ease-in-out;
         }
         
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.5; }
-            100% { transform: scale(1); opacity: 1; }
+        @keyframes cursorPulse {
+            0% { transform: scale(1); opacity: 1; border-width: 4px; }
+            50% { transform: scale(1.3); opacity: 0.6; border-width: 2px; }
+            100% { transform: scale(1); opacity: 1; border-width: 4px; }
+        }
+        
+        @keyframes dotPulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.5); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        /* Подсказка AR */
+        #ar-prompt {
+            position: absolute;
+            left: 50%;
+            top: 30%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.3s ease;
+            border: 2px solid #ff6b6b;
+            max-width: 320px;
+            width: 90%;
+            z-index: 100;
+        }
+        
+        model-viewer[ar-status="session-started"] > #ar-prompt {
+            display: block;
+        }
+        
+        .tap-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 15px;
+        }
+        
+        .tap-icon svg {
+            width: 100%;
+            height: 100%;
         }
         
         #ar-prompt p {
             color: #fff;
-            font-size: 18px;
+            font-size: 20px;
             line-height: 1.5;
             margin: 0;
-            font-weight: 500;
+            font-weight: 600;
         }
         
         #ar-prompt .hint-subtitle {
-            color: #aaa;
-            font-size: 14px;
+            color: #ff6b6b;
+            font-size: 16px;
             margin-top: 10px;
+            font-weight: 500;
         }
         
         /* Ошибка AR */
@@ -280,8 +287,6 @@
             to { opacity: 1; transform: translate(-50%, -50%); }
         }
         
-
-        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -306,6 +311,11 @@
             .controls-hint {
                 font-size: 12px;
                 padding: 8px 12px;
+            }
+            
+            #ar-cursor {
+                width: 60px;
+                height: 60px;
             }
         }
         
@@ -350,12 +360,11 @@
             ar
             ar-modes="webxr"
             ar-scale="fixed"
-            scale="12 12 12"
-
+            scale="20 20 20"
             xr-environment
-            camera-orbit="0deg 75deg 2m"
-            min-camera-orbit="auto auto 1m"
-            max-camera-orbit="auto auto 4m"
+            camera-orbit="0deg 75deg 3m"
+            min-camera-orbit="auto auto 2m"
+            max-camera-orbit="auto auto 8m"
             field-of-view="45deg"
             exposure="1"
             environment-image="neutral"
@@ -383,7 +392,7 @@
                 <span>Включить AR</span>
             </button>
             
-            <!-- Прицел для AR -->
+            <!-- Прицел для AR - пульсирующий -->
             <div id="ar-cursor" slot="poster">
                 <div class="cursor-ring"></div>
                 <div class="cursor-dot"></div>
@@ -393,19 +402,16 @@
             <div id="ar-prompt" slot="poster">
                 <div class="tap-icon">
                     <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="50" cy="50" r="40" stroke="white" stroke-width="2" fill="rgba(255,255,255,0.1)"/>
-                        <circle cx="50" cy="50" r="30" stroke="#ff6b6b" stroke-width="3" fill="none" opacity="0.8">
-                            <animate attributeName="r" values="25;35;25" dur="1.5s" repeatCount="indefinite"/>
-                            <animate attributeName="opacity" values="1;0.5;1" dur="1.5s" repeatCount="indefinite"/>
+                        <circle cx="50" cy="50" r="45" stroke="white" stroke-width="3" fill="rgba(255,255,255,0.1)"/>
+                        <circle cx="50" cy="50" r="35" stroke="#ff6b6b" stroke-width="4" fill="none" opacity="0.9">
+                            <animate attributeName="r" values="30;40;30" dur="1s" repeatCount="indefinite"/>
+                            <animate attributeName="opacity" values="1;0.4;1" dur="1s" repeatCount="indefinite"/>
                         </circle>
-                        <g transform="translate(50, 50)">
-                            <ellipse cx="0" cy="5" rx="12" ry="15" fill="#feca57" opacity="0.9"/>
-                            <rect x="-8" y="-10" width="16" height="20" rx="3" fill="#333"/>
-                        </g>
+                        <text x="50" y="55" text-anchor="middle" fill="white" font-size="30" font-weight="bold">👆</text>
                     </svg>
                 </div>
                 <p>Наведите на стол</p>
-                <p class="hint-subtitle">👆 Кликните чтобы разместить бургер</p>
+                <p class="hint-subtitle">⚡ Нажмите на экран ⚡</p>
             </div>
             
             <!-- Ошибка AR -->
@@ -431,7 +437,7 @@
         const arError = document.getElementById('ar-error');
         const debugInfo = document.getElementById('debug-info');
         
-        // Включаем отладку (убрать в продакшене)
+        // Включаем отладку
         function log(message) {
             console.log(message);
             if (debugInfo) {
@@ -441,18 +447,17 @@
         }
         
         // Инфо об устройстве
-        log('📱 Устройство: ' + navigator.userAgent.substring(0, 50) + '...');
-        log('🔍 Платформа: ' + navigator.platform);
+        log('📱 ' + navigator.userAgent.substring(0, 40));
         
-        // Масштабирование модели в 3 раза через JS
+        // Установка большого масштаба при загрузке
         modelViewer.addEventListener('load', () => {
             log('✅ Модель загружена');
             if (loading) loading.style.display = 'none';
             
-            // Устанавливаем масштаб
+            // Масштабируем модель в 20 раз для 3D режима
             try {
-                modelViewer.scale = '12 12 12';
-                log('📐 Масштаб установлен: 12x');
+                modelViewer.scale = '20 20 20';
+                log('📐 Масштаб 20x установлен');
             } catch(e) {
                 log('⚠️ Ошибка масштаба: ' + e.message);
             }
@@ -462,154 +467,121 @@
         modelViewer.addEventListener('error', (e) => {
             log('❌ Ошибка: ' + e.detail);
             if (loading) {
-                loading.innerHTML = '<p style="color: #ff6b6b;">😕 Не удалось загрузить модель<br><small>Проверьте соединение</small></p>';
+                loading.innerHTML = '<p style="color: #ff6b6b;">😕 Ошибка загрузки</p>';
             }
         });
         
-        // Отслеживание статуса AR
+        // Управление AR - ожидание клика
+        let arSessionActive = false;
+        let modelPlaced = false;
+        
         modelViewer.addEventListener('ar-status', (e) => {
             log('📱 AR: ' + e.detail.status);
             
-            switch(e.detail.status) {
-                case 'session-started':
-                    log('✅ AR запущен');
-                    // Устанавливаем масштаб в AR
-                    try {
-                        modelViewer.scale = '12 12 12';
-                    } catch(e) {}
-                    break;
-                    
-                case 'not-presenting':
-                    log('👋 AR закрыт');
-                    arError.style.display = 'none';
-                    break;
-                    
-                case 'failed':
-                    log('❌ AR ошибка');
-                    arError.style.display = 'block';
-                    // Не скрываем оригинальный контент
-                    break;
-            }
-        });
-        
-        // Отслеживание трекинга
-        modelViewer.addEventListener('ar-tracking', (e) => {
-            log('👁️ Трекинг: ' + e.detail.status);
-        });
-        
-        // Обработка клика в AR режиме для размещения модели
-        let arModelPlaced = false;
-        
-        modelViewer.addEventListener('ar-status', (e) => {
             if (e.detail.status === 'session-started') {
-                arModelPlaced = false;
-                log('👆 Ожидание клика для размещения...');
+                arSessionActive = true;
+                modelPlaced = false;
+                log('👆 Ждем клик для размещения...');
                 
-                // Слушаем клики в AR режиме
-                modelViewer.addEventListener('click', placeModelOnClick);
+                // Показываем прицел и подсказку
+                const cursor = document.getElementById('ar-cursor');
+                const prompt = document.getElementById('ar-prompt');
+                if (cursor) cursor.style.display = 'block';
+                if (prompt) prompt.style.display = 'block';
+                
             } else if (e.detail.status === 'not-presenting') {
-                // Убираем слушатель кликов при выходе из AR
-                modelViewer.removeEventListener('click', placeModelOnClick);
-                arModelPlaced = false;
+                arSessionActive = false;
+                modelPlaced = false;
+                arError.style.display = 'none';
+                
+            } else if (e.detail.status === 'failed') {
+                log('❌ AR ошибка');
+                arError.style.display = 'block';
             }
         });
         
-        function placeModelOnClick(event) {
-            if (arModelPlaced) return; // Модель уже размещена
+        // Обработка клика для размещения модели
+        document.addEventListener('click', (e) => {
+            if (!arSessionActive || modelPlaced) return;
             
-            // Размещаем модель в точке клика
-            try {
-                // Прячем подсказку
-                const prompt = document.getElementById('ar-prompt');
-                if (prompt) prompt.style.display = 'none';
-                
-                // Прячем прицел
-                const cursor = document.getElementById('ar-cursor');
-                if (cursor) cursor.style.display = 'none';
-                
-                arModelPlaced = true;
-                log('✅ Бургер размещен!');
-                
-                // Можно добавить вибрацию обратной связи
-                if (navigator.vibrate) {
-                    navigator.vibrate(50);
-                }
-            } catch (e) {
-                log('⚠️ Ошибка размещения: ' + e.message);
+            // Проверяем, что клик не по кнопкам
+            if (e.target.closest('button') || e.target.closest('#ar-prompt')) return;
+            
+            modelPlaced = true;
+            log('✅ Бургер размещен по клику!');
+            
+            // Скрываем прицел и подсказку
+            const cursor = document.getElementById('ar-cursor');
+            const prompt = document.getElementById('ar-prompt');
+            if (cursor) cursor.style.display = 'none';
+            if (prompt) prompt.style.display = 'none';
+            
+            // Вибрация
+            if (navigator.vibrate) {
+                navigator.vibrate(100);
             }
-        }
+        });
         
-        // Проверка поддержки AR (только WebXR)
-        async function checkAR() {
-            log('🔍 Проверка WebXR AR...');
+        // Также обрабатываем touch для мобильных
+        document.addEventListener('touchstart', (e) => {
+            if (!arSessionActive || modelPlaced) return;
             
-            // Проверяем только WebXR
+            // Проверяем, что клик не по кнопкам
+            if (e.target.closest('button') || e.target.closest('#ar-prompt')) return;
+            
+            modelPlaced = true;
+            log('✅ Бургер размещен по touch!');
+            
+            const cursor = document.getElementById('ar-cursor');
+            const prompt = document.getElementById('ar-prompt');
+            if (cursor) cursor.style.display = 'none';
+            if (prompt) prompt.style.display = 'none';
+            
+            if (navigator.vibrate) {
+                navigator.vibrate(100);
+            }
+        }, {passive: true});
+        
+        // Проверка поддержки AR
+        async function checkAR() {
+            log('🔍 Проверка AR...');
+            
             if ('xr' in navigator) {
                 try {
                     const supported = await navigator.xr.isSessionSupported('immersive-ar');
                     if (supported) {
                         log('🥽 WebXR AR доступен');
-                        return 'webxr';
-                    } else {
-                        log('❌ WebXR AR не поддерживается');
+                        return true;
                     }
                 } catch (e) {
                     log('⚠️ WebXR ошибка: ' + e.message);
                 }
-            } else {
-                log('❌ WebXR не доступен в браузере');
             }
             
+            log('❌ AR не поддерживается');
             return false;
         }
         
         // Повторная попытка AR
         function retryAR() {
             arError.style.display = 'none';
-            log('🔄 Повторная попытка AR...');
-            
-            // Перезагружаем страницу как fallback
-            setTimeout(() => {
-                location.reload();
-            }, 500);
+            location.reload();
         }
         
-        // Проверяем при загрузке и обновляем UI
-        checkAR().then(mode => {
+        // Проверяем при загрузке
+        checkAR().then(supported => {
             const arButton = document.getElementById('ar-button');
             
-            if (!mode) {
-                // AR не поддерживается
-                if (arButton) {
-                    arButton.innerHTML = '<span class="ar-icon">📵</span><span>AR недоступен</span>';
-                    arButton.style.background = '#666';
-                    arButton.style.opacity = '0.7';
-                    arButton.disabled = true;
-                    arButton.title = 'Для AR нужен Chrome 83+ или Android с ARCore';
-                }
-                log('📵 AR не поддерживается. Установите Chrome 83+');
-                
-                // Показываем подсказку
-                const hint = document.querySelector('.controls-hint');
-                if (hint) {
-                    hint.innerHTML = '📵 AR доступен только в Chrome 83+';
-                    hint.style.background = 'rgba(255, 107, 107, 0.8)';
-                }
-            } else {
-                // WebXR доступен
-                log('🥽 WebXR AR активен');
-                if (arButton) {
-                    arButton.innerHTML = '<span class="ar-icon">📱</span><span>Включить AR</span>';
-                }
+            if (!supported && arButton) {
+                arButton.innerHTML = '<span class="ar-icon">📵</span><span>AR недоступен</span>';
+                arButton.style.background = '#666';
+                arButton.style.opacity = '0.7';
+                arButton.disabled = true;
+                log('📵 Нужен Chrome 83+');
             }
         });
         
-        // Дополнительная защита от вылетов
-        window.addEventListener('error', (e) => {
-            log('💥 Ошибка JS: ' + e.message);
-        });
-        
-        // Защита от случайного зума
+        // Защита от зума
         document.addEventListener('gesturestart', (e) => e.preventDefault());
         document.addEventListener('gesturechange', (e) => e.preventDefault());
         document.addEventListener('gestureend', (e) => e.preventDefault());
