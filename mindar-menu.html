@@ -345,13 +345,8 @@
         <!-- Маркер #0 - Классический бургер -->
         <a-entity mindar-image-target="targetIndex: 0">
             <!-- 3D модель бургера -->
-            <a-gltf-model 
-                id="burger-model" 
-                src="./Hamburger2.glb" 
-                position="0 0.1 0" 
-                scale="0.5 0.5 0.5" 
-                rotation="0 0 0"
-                animation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear">
+            <a-gltf-model id="burger-model" src="./Hamburger2.glb" position="0 0 0" scale="15 15 15" rotation="-90 0 0"
+                animation="property: rotation; to: -90 360 0; loop: true; dur: 8000; easing: linear">
             </a-gltf-model>
 
             <!-- Подсветка снизу -->
