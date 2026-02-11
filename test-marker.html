@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Тестовый маркер для AR</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 25px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .marker-container {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 3px dashed #667eea;
+        }
+
+        .marker-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .instructions {
+            background: #e8f4f8;
+            border-left: 4px solid #00cc6a;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: left;
+            margin: 20px 0;
+        }
+
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            color: #555;
+        }
+
+        .instructions li {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .info-box strong {
+            color: #856404;
+        }
+
+        .qr-code {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎯 Тестовый маркер для AR-меню</h1>
+        <p>Используйте это изображение для тестирования AR функционала</p>
+
+        <div class="marker-container">
+            <img src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/examples/image-tracking/assets/card-example/card.png"
+                alt="AR Marker" class="marker-image" id="marker-img">
+        </div>
+
+        <div class="instructions">
+            <h3>📱 Как тестировать:</h3>
+            <ol>
+                <li><strong>На компьютере:</strong> Откройте эту страницу на большом экране</li>
+                <li><strong>На телефоне:</strong> Откройте AR-меню (<code>mindar-menu.html</code>)</li>
+                <li><strong>Наведите камеру телефона</strong> на изображение маркера на экране компьютера</li>
+                <li><strong>Дождитесь распознавания</strong> - 3D бургер появится на маркере!</li>
+            </ol>
+        </div>
+
+        <div class="info-box">
+            <strong>💡 Совет:</strong> Для лучшего распознавания держите камеру на расстоянии 20-40 см от маркера.
+            Убедитесь что освещение хорошее и маркер не размыт.
+        </div>
+
+        <div class="button-group">
+            <a href="mindar-menu.html" class="btn">🚀 Запустить AR-меню</a>
+            <button onclick="downloadMarker()" class="btn btn-secondary">💾 Скачать маркер</button>
+            <button onclick="printMarker()" class="btn btn-secondary">🖨️ Печать маркера</button>
+        </div>
+
+        <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #eee;">
+            <h3 style="color: #333; margin-bottom: 15px;">📋 Информация о маркере</h3>
+            <p style="font-size: 14px; color: #666;">
+                <strong>Источник:</strong> MindAR Example Card<br>
+                <strong>Размер:</strong> 512x512px<br>
+                <strong>Формат:</strong> PNG<br>
+                <strong>Target Index:</strong> 0
+            </p>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <h3 style="color: #333; margin-bottom: 15px;">🔗 Полезные ссылки</h3>
+            <div class="button-group">
+                <a href="https://hiukim.github.io/mind-ar-js-doc/" target="_blank" class="btn btn-secondary">📚
+                    Документация MindAR</a>
+                <a href="https://hiukim.github.io/mind-ar-js-doc/tools/compile" target="_blank"
+                    class="btn btn-secondary">🛠️ Создать свой маркер</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Скачать маркер
+        function downloadMarker() {
+            const link = document.createElement('a');
+            link.href = 'https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/examples/image-tracking/assets/card-example/card.png';
+            link.download = 'ar-marker.png';
+            link.click();
+        }
+
+        // Печать маркера
+        function printMarker() {
+            window.print();
+        }
+
+        // Показать подсказку при загрузке
+        window.addEventListener('load', () => {
+            console.log('✅ Тестовый маркер загружен');
+            console.log('📱 Откройте mindar-menu.html на телефоне для тестирования');
+        });
+    </script>
+
+    <style media="print">
+        body {
+            background: white;
+        }
+
+        .container {
+            box-shadow: none;
+            max-width: 100%;
+        }
+
+        .button-group,
+        .info-box,
+        .instructions {
+            display: none;
+        }
+
+        .marker-container {
+            border: 2px solid #000;
+            page-break-inside: avoid;
+        }
+
+        .marker-image {
+            max-width: 15cm;
+            height: auto;
+        }
+    </style>
+</body>
+
+</html>
