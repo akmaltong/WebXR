@@ -85,12 +85,12 @@
 <body>
 
     <div class="info-panel">
-        <h1>Классический Бургер</h1>
-        <p>450 ₽ • Сочная говядина</p>
+        <h1 id="dish-name">Загрузка...</h1>
+        <p id="dish-details">...</p>
     </div>
 
     <!-- 3D Модель -->
-    <model-viewer src="./Hamburger2.glb" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor"
+    <model-viewer id="model-viewer" src="" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor"
         camera-controls tone-mapping="neutral" shadow-intensity="1" auto-rotate rotation-per-second="30deg"
         interaction-prompt="auto">
 
@@ -104,6 +104,55 @@
         </button>
 
     </model-viewer>
+
+    <script>
+        // 🛠 НАСТРОЙКА МЕНЮ (БАЗА ДАННЫХ)
+        // Добавляйте сюда новые бургеры по аналогии
+        const menuDatabase = {
+            'classic': {
+                name: 'Классический Бургер',
+                price: '450 ₽',
+                desc: 'Сочная говядина, овощи',
+                model: './Hamburger2.glb' // Имя вашего файла
+            },
+            'cheese': {
+                name: 'Чизбургер Делюкс',
+                price: '490 ₽',
+                desc: 'Двойной сыр, котлета',
+                model: './burger_cheese.glb'
+            },
+            'spicy': {
+                name: 'Острый Мексиканский',
+                price: '520 ₽',
+                desc: 'Халапеньо, острый соус',
+                model: './burger_spicy.glb'
+            },
+            'chicken': {
+                name: 'Чикен Бургер',
+                price: '390 ₽',
+                desc: 'Куриное филе, соус ранч',
+                model: './burger_chicken.glb'
+            },
+            'vegan': {
+                name: 'Веган Бургер',
+                price: '550 ₽',
+                desc: 'Растительная котлета, авокадо',
+                model: './burger_vegan.glb'
+            }
+        };
+
+        // Логика загрузки
+        const params = new URLSearchParams(window.location.search);
+        const dishId = params.get('id') || 'classic'; // Если нет id, открываем classic
+        const dish = menuDatabase[dishId] || menuDatabase['classic'];
+
+        // Обновляем страницу
+        document.getElementById('dish-name').textContent = dish.name;
+        document.getElementById('dish-details').textContent = `${dish.price} • ${dish.desc}`;
+        document.getElementById('model-viewer').src = dish.model;
+
+        console.log(`🍔 Загружен бургер: ${dishId}`);
+    </script>
 
 </body>
 
