@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="BurgerAR - просмотр бургера в 3D и дополненной реальности">
+    <title>BurgerAR - Ваш бургер</title>
+    
+    <!-- Model Viewer -->
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+        }
+        
+        #viewer-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+            --poster-color: transparent;
+            /* Увеличиваем масштаб в 3 раза */
+            --scale: 3;
+        }
+        
+        /* Кнопка AR */
+        #ar-button {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            border: none;
+            padding: 18px 32px;
+            border-radius: 30px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            position: absolute;
+            left: 50%;
+            bottom: 40px;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(238, 90, 111, 0.4);
+            transition: all 0.3s ease;
+            z-index: 10;
+            white-space: nowrap;
+        }
+        
+        #ar-button:hover {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 12px 35px rgba(238, 90, 111, 0.5);
+        }
+        
+        #ar-button:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+        
+        .ar-icon {
+            font-size: 22px;
+        }
+        
+        /* Подсказка AR */
+        #ar-prompt {
+            position: absolute;
+            left: 50%;
+            top: 40%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 300px;
+            width: 90%;
+            z-index: 100;
+        }
+        
+        model-viewer[ar-status="session-started"] > #ar-prompt {
+            display: block;
+        }
+        
+        .hand-animation {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 15px;
+        }
+        
+        .hand-animation svg {
+            width: 100%;
+            height: 100%;
+            animation: handMove 2s infinite ease-in-out;
+        }
+        
+        #ar-prompt p {
+            color: #fff;
+            font-size: 18px;
+            line-height: 1.5;
+            margin: 0;
+            font-weight: 500;
+        }
+        
+        #ar-prompt .hint-subtitle {
+            color: #aaa;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        /* Ошибка AR */
+        #ar-error {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 107, 107, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            display: none;
+            max-width: 320px;
+            width: 90%;
+            z-index: 100;
+        }
+        
+        #ar-error p {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        #ar-error button {
+            background: white;
+            color: #ff6b6b;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        /* Загрузка */
+        #loading {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 40px;
+            border-radius: 20px;
+            z-index: 50;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #ff6b6b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        #loading p {
+            color: white;
+            font-size: 16px;
+        }
+        
+        /* Верхняя панель */
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .burger-info {
+            color: white;
+            pointer-events: auto;
+        }
+        
+        .burger-info h1 {
+            font-size: 26px;
+            margin-bottom: 5px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .burger-info .price {
+            font-size: 22px;
+            font-weight: 600;
+            color: #feca57;
+        }
+        
+        .controls-hint {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 16px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -45%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        
+        @keyframes handMove {
+            0%, 100% { transform: translateX(-15px) rotate(-5deg); }
+            50% { transform: translateX(15px) rotate(5deg); }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Мобильная адаптация */
+        @media (max-width: 480px) {
+            .burger-info h1 {
+                font-size: 22px;
+            }
+            
+            .burger-info .price {
+                font-size: 18px;
+            }
+            
+            #ar-button {
+                padding: 16px 28px;
+                font-size: 16px;
+                bottom: 30px;
+            }
+            
+            .controls-hint {
+                font-size: 12px;
+                padding: 8px 12px;
+            }
+        }
+        
+        /* Скрытие слотов когда не определены */
+        :not(:defined) > * {
+            display: none;
+        }
+        
+        /* Отладочная информация */
+        #debug-info {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        #debug-info.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="viewer-container">
+        <model-viewer
+            id="burger-model"
+            src="Hamburger2.glb"
+            ios-src="Hamburger.usdz"
+            alt="3D модель бургера"
+            shadow-intensity="1"
+            camera-controls
+            touch-action="pan-y"
+            ar
+            ar-modes="webxr"
+            ar-scale="fixed"
+            scale="3 3 3"
+            ar-placement="floor"
+            xr-environment
+            camera-orbit="0deg 75deg 2m"
+            min-camera-orbit="auto auto 1m"
+            max-camera-orbit="auto auto 4m"
+            field-of-view="45deg"
+            exposure="1"
+            environment-image="neutral"
+            auto-rotate
+            auto-rotate-delay="2000"
+            interaction-prompt="none"
+            loading="eager"
+            reveal="auto">
+            
+            <!-- Верхняя панель с информацией -->
+            <div slot="poster" class="top-bar">
+                <div class="burger-info">
+                    <h1>Бургер Классический</h1>
+                    <div class="price">450 ₽</div>
+                </div>
+            </div>
+            
+            <!-- Подсказка управления -->
+            <div slot="poster" class="controls-hint">
+                👆 Вращайте • 🤏 Приближайте
+            </div>
+            
+            <!-- Кнопка AR -->
+            <button slot="ar-button" id="ar-button">
+                <span class="ar-icon">📱</span>
+                <span>Включить AR</span>
+            </button>
+            
+            <!-- Подсказка для AR -->
+            <div id="ar-prompt" slot="poster">
+                <div class="hand-animation">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="40" stroke="white" stroke-width="2" fill="rgba(255,255,255,0.1)"/>
+                        <g transform="translate(50, 50)">
+                            <rect x="-12" y="-22" width="24" height="44" rx="3" fill="#333" stroke="white" stroke-width="2"/>
+                            <rect x="-10" y="-20" width="20" height="36" fill="#1a1a2e"/>
+                            <circle cx="0" cy="-5" r="6" fill="#ff6b6b" opacity="0.8"/>
+                            <ellipse cx="0" cy="12" rx="4" ry="7" fill="#feca57"/>
+                            <path d="M -14 22 Q -18 32 -8 36 L 8 36 Q 18 32 14 22" fill="#feca57"/>
+                        </g>
+                        <path d="M 15 50 L 30 50" stroke="#4ecdc4" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+                        <path d="M 85 50 L 70 50" stroke="#4ecdc4" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+                        <defs>
+                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+                                <path d="M0,0 L10,3 L0,6 Z" fill="#4ecdc4"/>
+                            </marker>
+                        </defs>
+                    </svg>
+                </div>
+                <p>Наведите на стол</p>
+                <p class="hint-subtitle">Медленно двигайте телефоном</p>
+            </div>
+            
+            <!-- Ошибка AR -->
+            <div id="ar-error" slot="poster">
+                <p>😕 AR временно недоступен</p>
+                <button onclick="retryAR()">Попробовать снова</button>
+            </div>
+            
+            <!-- Индикатор загрузки -->
+            <div id="loading" slot="poster">
+                <div class="spinner"></div>
+                <p>Загрузка 3D модели...<br><small>Это может занять несколько секунд</small></p>
+            </div>
+        </model-viewer>
+    </div>
+    
+    <!-- Отладочная информация -->
+    <div id="debug-info"></div>
+
+    <script>
+        const modelViewer = document.getElementById('burger-model');
+        const loading = document.getElementById('loading');
+        const arError = document.getElementById('ar-error');
+        const debugInfo = document.getElementById('debug-info');
+        
+        // Включаем отладку (убрать в продакшене)
+        function log(message) {
+            console.log(message);
+            if (debugInfo) {
+                debugInfo.innerHTML += message + '<br>';
+                debugInfo.classList.add('visible');
+            }
+        }
+        
+        // Инфо об устройстве
+        log('📱 Устройство: ' + navigator.userAgent.substring(0, 50) + '...');
+        log('🔍 Платформа: ' + navigator.platform);
+        
+        // Масштабирование модели в 3 раза через JS
+        modelViewer.addEventListener('load', () => {
+            log('✅ Модель загружена');
+            if (loading) loading.style.display = 'none';
+            
+            // Устанавливаем масштаб
+            try {
+                modelViewer.scale = '3 3 3';
+                log('📐 Масштаб установлен: 3x');
+            } catch(e) {
+                log('⚠️ Ошибка масштаба: ' + e.message);
+            }
+        });
+        
+        // Обработка ошибки загрузки
+        modelViewer.addEventListener('error', (e) => {
+            log('❌ Ошибка: ' + e.detail);
+            if (loading) {
+                loading.innerHTML = '<p style="color: #ff6b6b;">😕 Не удалось загрузить модель<br><small>Проверьте соединение</small></p>';
+            }
+        });
+        
+        // Отслеживание статуса AR
+        modelViewer.addEventListener('ar-status', (e) => {
+            log('📱 AR: ' + e.detail.status);
+            
+            switch(e.detail.status) {
+                case 'session-started':
+                    log('✅ AR запущен');
+                    // Устанавливаем масштаб в AR
+                    try {
+                        modelViewer.scale = '3 3 3';
+                    } catch(e) {}
+                    break;
+                    
+                case 'not-presenting':
+                    log('👋 AR закрыт');
+                    arError.style.display = 'none';
+                    break;
+                    
+                case 'failed':
+                    log('❌ AR ошибка');
+                    arError.style.display = 'block';
+                    // Не скрываем оригинальный контент
+                    break;
+            }
+        });
+        
+        // Отслеживание трекинга
+        modelViewer.addEventListener('ar-tracking', (e) => {
+            log('👁️ Трекинг: ' + e.detail.status);
+        });
+        
+        // Проверка поддержки AR (только WebXR)
+        async function checkAR() {
+            log('🔍 Проверка WebXR AR...');
+            
+            // Проверяем только WebXR
+            if ('xr' in navigator) {
+                try {
+                    const supported = await navigator.xr.isSessionSupported('immersive-ar');
+                    if (supported) {
+                        log('🥽 WebXR AR доступен');
+                        return 'webxr';
+                    } else {
+                        log('❌ WebXR AR не поддерживается');
+                    }
+                } catch (e) {
+                    log('⚠️ WebXR ошибка: ' + e.message);
+                }
+            } else {
+                log('❌ WebXR не доступен в браузере');
+            }
+            
+            return false;
+        }
+        
+        // Повторная попытка AR
+        function retryAR() {
+            arError.style.display = 'none';
+            log('🔄 Повторная попытка AR...');
+            
+            // Перезагружаем страницу как fallback
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+        }
+        
+        // Проверяем при загрузке и обновляем UI
+        checkAR().then(mode => {
+            const arButton = document.getElementById('ar-button');
+            
+            if (!mode) {
+                // AR не поддерживается
+                if (arButton) {
+                    arButton.innerHTML = '<span class="ar-icon">📵</span><span>AR недоступен</span>';
+                    arButton.style.background = '#666';
+                    arButton.style.opacity = '0.7';
+                    arButton.disabled = true;
+                    arButton.title = 'Для AR нужен Chrome 83+ или Android с ARCore';
+                }
+                log('📵 AR не поддерживается. Установите Chrome 83+');
+                
+                // Показываем подсказку
+                const hint = document.querySelector('.controls-hint');
+                if (hint) {
+                    hint.innerHTML = '📵 AR доступен только в Chrome 83+';
+                    hint.style.background = 'rgba(255, 107, 107, 0.8)';
+                }
+            } else {
+                // WebXR доступен
+                log('🥽 WebXR AR активен');
+                if (arButton) {
+                    arButton.innerHTML = '<span class="ar-icon">📱</span><span>Включить AR</span>';
+                }
+            }
+        });
+        
+        // Дополнительная защита от вылетов
+        window.addEventListener('error', (e) => {
+            log('💥 Ошибка JS: ' + e.message);
+        });
+        
+        // Защита от случайного зума
+        document.addEventListener('gesturestart', (e) => e.preventDefault());
+        document.addEventListener('gesturechange', (e) => e.preventDefault());
+        document.addEventListener('gestureend', (e) => e.preventDefault());
+    </script>
+</body>
+</html>

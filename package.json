@@ -1,0 +1,19 @@
+{
+  "name": "burgerar",
+  "version": "1.0.0",
+  "description": "Веб-приложение для просмотра бургера в 3D и AR через QR-коды",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "serve": "npx http-server -p 8000 -c-1"
+  },
+  "keywords": [
+    "webxr",
+    "ar",
+    "3d",
+    "burger",
+    "qr-code"
+  ],
+  "author": "",
+  "license": "MIT"
+}
