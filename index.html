@@ -364,7 +364,8 @@
         <model-viewer id="model" src="Hamburger2.glb" ios-src="Hamburger.usdz" alt="Бургер" camera-controls
             touch-action="pan-y" shadow-intensity="1" shadow-softness="0.5" exposure="1" camera-orbit="0deg 75deg 3m"
             min-camera-orbit="auto auto 1.5m" max-camera-orbit="auto auto 10m" ar
-            ar-modes="webxr scene-viewer quick-look" ar-scale="auto" ar-placement="floor" auto-rotate loading="lazy">
+            ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="floor" scale="5 5 5" auto-rotate
+            loading="lazy">
 
             <div slot="poster" class="ui-top">
                 <!-- Content removed -->
@@ -441,7 +442,8 @@
                 arActive = false;
                 hideAllUI();
             } else if (e.detail.status === 'object-placed') {
-                // Default behavior
+                // Ensure scale is correct after placement
+                modelViewer.scale = '5 5 5';
             }
         });
 
@@ -536,7 +538,7 @@
             if (modelPlaced) return;
 
             modelPlaced = true;
-            // Native scale is used now
+            modelViewer.scale = '5 5 5';
 
             // Скрываем UI размещения
             hidePlaceButton();
@@ -602,7 +604,7 @@
         function resetPlacement() {
             modelPlaced = false;
             surfaceScanned = false;
-            // Scale reset removed
+            modelViewer.scale = '5 5 5';
             hideControlsUI();
             showPlacementUI();
         }
