@@ -330,7 +330,7 @@
 
     <!-- A-Frame AR сцена -->
     <a-scene
-        mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;"
+        mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no; filterMinCF: 0.001; filterBeta: 10;"
         color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false">
 
@@ -345,7 +345,7 @@
         <!-- Маркер #0 - Классический бургер -->
         <a-entity mindar-image-target="targetIndex: 0">
             <!-- 3D модель бургера -->
-            <a-gltf-model id="burger-model" src="./Hamburger2.glb" position="0 0.3 0" scale="6 6 6" rotation="-90 0 0">
+            <a-gltf-model id="burger-model" src="./Hamburger2.glb" position="0 0 0" scale="6 6 6" rotation="0 0 0">
             </a-gltf-model>
 
             <!-- Подсветка снизу -->
