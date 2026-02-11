@@ -407,17 +407,7 @@
             }
 
             try {
-                // Проверяем доступ к камере
-                console.log('🎥 Запрос доступа к камере...');
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' }
-                });
-                console.log('✅ Доступ к камере получен');
-
-                // Останавливаем тестовый поток
-                stream.getTracks().forEach(track => track.stop());
-
-                // Запускаем MindAR
+                // Запускаем MindAR (он сам запросит доступ к камере)
                 console.log('🚀 Запуск MindAR...');
                 const mindAR = sceneEl.systems['mindar-image-system'];
                 await mindAR.start();
@@ -431,23 +421,11 @@
                 console.error('❌ Ошибка запуска AR:', error);
                 loading.classList.remove('active');
 
-                let errorMsg = '❌ Ошибка запуска AR\n\n';
-
-                if (error.name === 'NotAllowedError') {
-                    errorMsg += 'Доступ к камере запрещен!\n\n' +
-                        'Разрешите доступ к камере в настройках браузера.';
-                } else if (error.name === 'NotFoundError') {
-                    errorMsg += 'Камера не найдена!\n\n' +
-                        'Проверьте подключение камеры.';
-                } else if (error.name === 'NotReadableError') {
-                    errorMsg += 'Камера занята другим приложением!\n\n' +
-                        'Закройте другие приложения использующие камеру.';
-                } else {
-                    errorMsg += error.message || 'Неизвестная ошибка';
-                }
+                let errorMsg = '❌ Ошибка автозапуска AR\n\n';
+                errorMsg += 'Попробуйте перезагрузить страницу.\n';
+                errorMsg += 'Убедитесь, что разрешили доступ к камере.';
 
                 alert(errorMsg);
-                console.error('Детали ошибки:', error);
             }
         });
 
