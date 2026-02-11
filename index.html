@@ -8,6 +8,7 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/webxr/VRButton.js"></script>
     
     <style>
         * {
@@ -460,6 +461,9 @@
             <button id="close-instructions">Понятно!</button>
         </div>
     </div>
+    
+    <!-- Отладка -->
+    <div id="debug-info" style="position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.9); color: #0f0; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 11px; max-width: 300px; z-index: 1000000; max-height: 200px; overflow-y: auto;"></div>
 
     <script>
         // Глобальные переменные
@@ -485,6 +489,16 @@
         const promptSubtitle = document.getElementById('prompt-subtitle');
         const arInstructions = document.getElementById('ar-instructions');
         const closeInstructionsBtn = document.getElementById('close-instructions');
+        const debugInfo = document.getElementById('debug-info');
+        
+        // Функция логирования
+        function log(msg) {
+            console.log(msg);
+            if (debugInfo) {
+                debugInfo.innerHTML += msg + '<br>';
+                debugInfo.scrollTop = debugInfo.scrollHeight;
+            }
+        }
         
         // Закрыть инструкцию
         closeInstructionsBtn.addEventListener('click', () => {
@@ -493,6 +507,7 @@
         
         // Инициализация Three.js
         function init() {
+            log('🎨 Инициализация Three.js...');
             scene = new THREE.Scene();
             
             // Камера
@@ -568,7 +583,9 @@
             loading.style.display = 'block';
             
             const loader = new THREE.GLTFLoader();
+            log('📦 Загружаю модель...');
             loader.load('Hamburger2.glb', (gltf) => {
+                log('✅ Модель загружена');
                 burgerModel = gltf.scene;
                 burgerModel.scale.set(8, 8, 8);
                 burgerModel.visible = false; // Скрыт до размещения
@@ -610,15 +627,21 @@
         
         // Запуск AR
         async function startAR() {
-            if (!navigator.xr) return;
+            log('🚀 Запуск AR...');
+            if (!navigator.xr) {
+                log('❌ WebXR не поддерживается');
+                return;
+            }
             
             try {
+                log('📱 Запрашиваю XR сессию...');
                 xrSession = await navigator.xr.requestSession('immersive-ar', {
                     requiredFeatures: ['hit-test'],
                     optionalFeatures: ['dom-overlay'],
                     domOverlay: { root: document.body }
                 });
                 
+                log('✅ XR сессия получена');
                 isARActive = true;
                 surfaceScanned = false;
                 modelPlaced = false;
@@ -640,34 +663,37 @@
                 arInstructions.style.display = 'none';
                 
                 // Показываем UI сканирования
+                log('📱 Показываю UI сканирования...');
                 showScanningUI();
                 
                 // Обработчики тачей
                 xrSession.addEventListener('select', onSelect);
                 
                 renderer.xr.setSession(xrSession);
+                log('✅ AR запущен!');
                 
             } catch (e) {
-                console.error('AR ошибка:', e);
+                log('❌ AR ошибка: ' + e.message);
                 alert('AR не удалось запустить: ' + e.message);
             }
         }
         
         // Показ UI сканирования
         function showScanningUI() {
-            surfaceScanner.classList.add('visible');
-            arPrompt.classList.add('visible', 'scanning');
-            arPrompt.classList.remove('placement');
+            log('🔍 Показываю сканер');
+            surfaceScanner.style.display = 'block';
+            arPrompt.style.display = 'block';
+            arPrompt.style.borderColor = '#00ff00';
             promptTitle.textContent = '🔍 Сканирование поверхности';
             promptSubtitle.textContent = 'Двойной тап чтобы зафиксировать';
         }
         
         // Показ UI размещения
         function showPlacementUI() {
-            surfaceScanner.classList.remove('visible');
-            placementCursor.classList.add('visible');
-            arPrompt.classList.remove('scanning');
-            arPrompt.classList.add('placement');
+            log('🍔 Показываю прицел размещения');
+            surfaceScanner.style.display = 'none';
+            placementCursor.style.display = 'block';
+            arPrompt.style.borderColor = '#ff0000';
             promptTitle.textContent = '🍔 Готово!';
             promptSubtitle.textContent = 'Двойной тап чтобы разместить бургер';
             
@@ -677,26 +703,40 @@
         
         // Обработка выбора (тапа)
         function onSelect(event) {
+            log('👆 Тап detected');
             const currentTime = Date.now();
             const tapLength = currentTime - lastTapTime;
+            log('⏱️ Tap length: ' + tapLength);
             
             if (tapLength < 300 && tapLength > 0) {
                 // Двойной тап
+                log('👆👆 ДВОЙНОЙ ТАП!');
                 if (!surfaceScanned) {
+                    log('✅ Фиксирую поверхность');
                     surfaceScanned = true;
                     showPlacementUI();
                 } else if (!modelPlaced && reticle.visible) {
+                    log('🍔 Размещаю бургер');
                     placeBurger();
                 }
                 lastTapTime = 0;
             } else {
                 lastTapTime = currentTime;
+                log('👆 Первый тап, жду второй...');
             }
         }
         
         // Размещение бургера
         function placeBurger() {
-            if (!burgerModel || !reticle.visible) return;
+            log('🍔 Размещение бургера...');
+            if (!burgerModel) {
+                log('❌ Модель не загружена');
+                return;
+            }
+            if (!reticle.visible) {
+                log('❌ Reticle не виден');
+                return;
+            }
             
             modelPlaced = true;
             
@@ -705,9 +745,11 @@
             burgerModel.rotation.copy(reticle.rotation);
             burgerModel.visible = true;
             
+            log('✅ Бургер размещен!');
+            
             // Скрываем UI
-            placementCursor.classList.remove('visible');
-            arPrompt.classList.remove('visible');
+            placementCursor.style.display = 'none';
+            arPrompt.style.display = 'none';
             reticle.visible = false;
             
             // Вибрация
@@ -716,6 +758,7 @@
         
         // Окончание AR сессии
         function onARSessionEnd() {
+            log('👋 AR сессия завершена');
             isARActive = false;
             surfaceScanned = false;
             modelPlaced = false;
@@ -724,9 +767,9 @@
                 burgerModel.visible = false;
             }
             
-            surfaceScanner.classList.remove('visible');
-            placementCursor.classList.remove('visible');
-            arPrompt.classList.remove('visible');
+            surfaceScanner.style.display = 'none';
+            placementCursor.style.display = 'none';
+            arPrompt.style.display = 'none';
             
             xrSession = null;
             hitTestSource = null;
